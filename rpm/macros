@@ -1,0 +1,3 @@
+%_topdir      /opt/crosstwine/mono-tizen/build/rpm
+%_tmppath     /opt/crosstwine/mono-tizen/build/rpm/tmp
+
