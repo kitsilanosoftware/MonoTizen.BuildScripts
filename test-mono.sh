@@ -22,36 +22,26 @@ set -e
 MONO_TIZEN_HOME="$HOME/mono-tizen"
 
 log_base=
+mono_sources="$MONO_TIZEN_HOME/mono-sources"
 
 export LANG=C
 
-# Figure out Mono sources location.
-
-if test "$1" = '--sources'; then
-    mono_sources="$2"
-    shift 2
-else
-    mono_sources="$MONO_TIZEN_HOME/mono-sources"
-fi
-
-if ! test -r "$mono_sources/mono-core.spec.in"; then
-    echo "Mono sources not found in $mono_sources; use --sources." >&2
-    exit 1
-fi
-
 # Testing procedure
 
-cd "$mono_sources"
+function ensure_ready {
+    if ! test -r "$mono_sources/mono-core.spec.in"; then
+        echo "Mono sources not found in $mono_sources; use --sources." >&2
+        exit 1
+    fi
 
-if test "$1" = '--log-base' -a -n "$2"; then
-    log_base="$2"
-    shift 2
-fi
+    if test -z "$log_base" -o ! -d "$log_base"; then
+        echo "No log base set, use --log-base <dir> as first arg." >&2
+        exit 1
+    fi
 
-if test -z "$log_base" -o ! -d "$log_base"; then
-    echo "No log base set, use --log-base <dir> as first arg." >&2
-    false
-fi
+    cd "$mono_sources"
+    mono_sources='.'
+}
 
 function test_subdir_unique_target {
     local subdir="$1"; shift
@@ -93,32 +83,47 @@ function test_mcs_class_lib {
     fi
 }
 
-if test "$1" = '--mono-mini'; then
-    test_subdir_unique_target 'mono/mini' 'rcheck'
-    shift
-fi
-
-if test "$1" = '--mono-tests'; then
-    test_subdir_unique_target 'mono/tests' 'check-local'
-    shift
-fi
-
-if test "$1" = '--mono-tests-gc-descriptors'; then
-    test_subdir_unique_target 'mono/tests/gc-descriptors' 'check-local'
-    shift
-fi
-
-if test "$1" = '--mcs-class-lib' -a -n "$2"; then
-    test_mcs_class_lib "$2"
-    shift 2
-fi
-
-if test "$1" = '--mcs-class-lib-fixture' -a -n "$2" -a -n "$3"; then
-    test_mcs_class_lib "$2" "$3"
-    shift 3
-fi
-
-if test -n "$*"; then
-    echo "Unknown args $*." >&2
-    false
-fi
+while test -n "$*"; do
+    case "$1" in
+        --log-base)
+            log_base="$2"
+            shift 2
+            ;;
+        --sources)
+            mono_sources="$2"
+            shift 2
+            ;;
+        --mono-mini)
+            ensure_ready
+            test_subdir_unique_target 'mono/mini' 'rcheck'
+            shift
+            ;;
+        --mono-tests)
+            ensure_ready
+            test_subdir_unique_target 'mono/tests' 'check-local'
+            shift
+            ;;
+        --mono-tests-gc-descriptors)
+            ensure_ready
+            test_subdir_unique_target 'mono/tests/gc-descriptors' 'check-local'
+            shift
+            ;;
+        --mcs-class-lib)
+            test -n "$2"
+            ensure_ready
+            test_mcs_class_lib "$2"
+            shift 2
+            ;;
+        --mcs-class-lib-fixture)
+            test -n "$2"
+            test -n "$3"
+            ensure_ready
+            test_mcs_class_lib "$2" "$3"
+            shift 3
+            ;;
+        *)
+            echo "Unknown args $*." >&2
+            exit 1
+            ;;
+    esac
+done
