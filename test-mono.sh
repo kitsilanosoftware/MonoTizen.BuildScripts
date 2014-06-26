@@ -63,10 +63,11 @@ function test_subdir_unique_target {
     fi
 }
 
-function test_mcs_class_lib {
-    local lib="$1"; shift
+function test_mcs_run_tests {
+    local mcs_subdir="$1"; shift
+    local dir="$1"; shift
     local make_args="$profile_arg"
-    local log_dir="$log_base/mcs/class/$profile_log_subdir$lib"
+    local log_dir="$log_base/mcs/$mcs_subdir$profile_log_subdir$dir"
     local fixture status
 
     if test -n "$1"; then
@@ -77,7 +78,7 @@ function test_mcs_class_lib {
     mkdir -p "$log_dir"
 
     (
-        cd "mcs/class/$lib" &&
+        cd "mcs/$mcs_subdir$dir" &&
         make run-test $make_args
     ) 2>&1 | tee "$log_dir/$HOSTNAME.log"
 
@@ -118,17 +119,27 @@ while test -n "$*"; do
             profile_log_subdir="$2/"
             shift 2
             ;;
+        --mcs-tests)
+            ensure_ready
+            test_mcs_run_tests '' 'tests'
+            shift 2
+            ;;
+        --mcs-errors)
+            ensure_ready
+            test_mcs_run_tests '' 'errors'
+            shift 2
+            ;;
         --mcs-class-lib)
             test -n "$2"
             ensure_ready
-            test_mcs_class_lib "$2"
+            test_mcs_run_tests 'class/' "$2"
             shift 2
             ;;
         --mcs-class-lib-fixture)
             test -n "$2"
             test -n "$3"
             ensure_ready
-            test_mcs_class_lib "$2" "$3"
+            test_mcs_run_tests 'class/' "$2" "$3"
             shift 3
             ;;
         *)
