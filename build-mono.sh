@@ -17,37 +17,80 @@
 # You should have received a copy of the GNU General Public License
 # along with MonoTizen.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is a basic build configuration for mono, which allows
+# specifying per-OS and per-arch options.
+
 set -e
 
-MONO_TIZEN_PREFIX='/opt/crosstwine/mono-tizen'
+MONO_TIZEN_HOME="$HOME/mono-tizen"
 BASE="$(dirname "$0")"
 DO_RUN=
+
+# Figure out Mono sources location.
+
+if test "$1" = '--sources'; then
+    mono_sources="$2"
+    shift 2
+else
+    mono_sources="$MONO_TIZEN_HOME/mono-sources"
+fi
+
+if ! test -r "$mono_sources/mono-core.spec.in"; then
+    echo "Mono sources not found in $mono_sources; use --sources." >&2
+    exit 1
+fi
+
+# Lookup OS in /etc/os-release, if available.
+
+function fetch_os_id {
+    source '/etc/os-release'
+    echo "$ID"
+}
+
+if test -r '/etc/os-release'; then
+    # Source in a subshell to avoid contamination.
+    os_id="$(fetch_os_id)"
+fi
+
+# Normalize arch
+
+arch="$(uname -m)"
+case "$arch" in
+    i686*)
+        # Get rid of _emulated from emulator images.  Also: other
+        # Intel archs?
+        arch='i686'
+        ;;
+esac
+
+# Reset.
 
 unset CC CXX CFLAGS CXXFLAGS DISTCC_HOSTS
 unset MONO_CONF_ARGS MONO_MAKE_ARGS
 
-# Source host-based environment files
+export MONO_TIZEN_SOURCES="$mono_sources"
+export MONO_TIZEN_OS_ID="$os_id"
+export MONO_TIZEN_ARCH="$arch"
 
-source "$BASE/build.env"
+# Source various environment files
+
+source "$BASE/all.env"
 
 if test -r "$BASE/distcc.env"; then
-    # Symbolic link to e.g. crosstwine/distcc.env
     source "$BASE/distcc.env"
 fi
 
-case "$HOSTNAME" in
-    mini)
-        ;;
-    tizn|teiz|thoz|thaz)
-        source "$BASE/build-without-mcs.env"
-        ;;
-    *)
-        echo "Unknown host $HOSTNAME." >&2
-        false
-        ;;
-esac
+if test -r "$BASE/os-$MONO_TIZEN_OS_ID.env"; then
+    source "$BASE/os-$MONO_TIZEN_OS_ID.env"
+fi
 
-source "$BASE/$HOSTNAME/build.env"
+if test -r "$BASE/arch-$MONO_TIZEN_ARCH.env"; then
+    source "$BASE/arch-$MONO_TIZEN_ARCH.env"
+fi
+
+if test -r "$BASE/$MONO_TIZEN_OS_ID-$MONO_TIZEN_ARCH.env"; then
+    source "$BASE/$MONO_TIZEN_OS_ID-$MONO_TIZEN_ARCH.env"
+fi
 
 # Complete distcc setup, if applicable
 
@@ -60,7 +103,7 @@ fi
 
 # Building procedure
 
-cd "$MONO_TIZEN_PREFIX/build/mono"
+cd "$MONO_TIZEN_SOURCES"
 
 if test "$1" = '--autogen'; then
     shift

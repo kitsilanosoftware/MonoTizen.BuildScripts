@@ -26,13 +26,25 @@ between steps) required to compile Mono in various VM configurations.
 
 ### build-mono.sh
 
-Captures the various per-VM options used to compile Mono.
+Captures the various per-OS and per-arch options used to compile Mono.
 
-    ./build-mono.sh [--autogen|--configure] [--build] [--install]
+    ./build-mono.sh [--sources <dir>] [--autogen|--configure] [--build] [--install]
+
+With:
+
+  * `--sources <dir>`: Specify the location of the Mono source tree;
+    defaults to `$HOME/mono-tizen/mono-sources`;
+
+  * `--autogen|--configure`: Execute the autogen or configure step;
+
+  * `--build`: Execute make, requires a configured build tree;
+
+  * `--install`: Execute make intall; requires a built tree.
 
 The correct configuration and build options that are passed down to
-the Mono build scripts depend on the build host.  Have a look at the
-script for details; questions to Damien Diederen <dd@crosstwine.com>.
+the Mono build scripts depend on the various `*.env` files.  Have a
+look at the script for details; questions to Damien Diederen
+(<dd@crosstwine.com>).
 
 ### test-mono.sh
 

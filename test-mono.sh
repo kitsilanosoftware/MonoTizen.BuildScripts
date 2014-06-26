@@ -19,8 +19,9 @@
 
 set -e
 
-MONO_TIZEN_PREFIX='/opt/crosstwine/mono-tizen'
-MONO_TEST_LOG_BASE=
+MONO_TIZEN_HOME="$HOME/mono-tizen"
+
+log_base=
 
 export LANG=C
 
@@ -35,16 +36,16 @@ case "$HOSTNAME" in
         ;;
 esac
 
-# Building procedure
+# Testing procedure
 
-cd "$MONO_TIZEN_PREFIX/build/mono"
+cd "$MONO_TIZEN_HOME/mono"
 
 if test "$1" = '--log-base' -a -n "$2"; then
-    MONO_TEST_LOG_BASE="$2"
+    log_base="$2"
     shift 2
 fi
 
-if test -z "$MONO_TEST_LOG_BASE"; then
+if test -z "$log_base" -o ! test -d "$log_base"; then
     echo "No log base set, use --log-base <dir> as first arg." >&2
     false
 fi
@@ -58,12 +59,12 @@ function test_mcs_class_lib {
         make_args="TEST_HARNESS_FLAGS=-fixture=$fixture"
     fi
 
-    mkdir -p "$MONO_TEST_LOG_BASE/mcs/class/$lib"
+    mkdir -p "$log_base/mcs/class/$lib"
 
     (
         cd "mcs/class/$lib" &&
         make run-test $make_args
-    ) 2>&1 | tee "$MONO_TEST_LOG_BASE/mcs/class/$lib/$HOSTNAME.log"
+    ) 2>&1 | tee "$log_base/mcs/class/$lib/$HOSTNAME.log"
     status=${PIPESTATUS[0]}
 
     if test $status -ne 0; then
