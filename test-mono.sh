@@ -25,30 +25,51 @@ log_base=
 
 export LANG=C
 
-# Host-based initialization, currently a no-op.
+# Figure out Mono sources location.
 
-case "$HOSTNAME" in
-    mini|tizn|teiz|thoz|thaz)
-        ;;
-    *)
-        echo "Unknown host $HOSTNAME." >&2
-        false
-        ;;
-esac
+if test "$1" = '--sources'; then
+    mono_sources="$2"
+    shift 2
+else
+    mono_sources="$MONO_TIZEN_HOME/mono-sources"
+fi
+
+if ! test -r "$mono_sources/mono-core.spec.in"; then
+    echo "Mono sources not found in $mono_sources; use --sources." >&2
+    exit 1
+fi
 
 # Testing procedure
 
-cd "$MONO_TIZEN_HOME/mono"
+cd "$mono_sources"
 
 if test "$1" = '--log-base' -a -n "$2"; then
     log_base="$2"
     shift 2
 fi
 
-if test -z "$log_base" -o ! test -d "$log_base"; then
+if test -z "$log_base" -o ! -d "$log_base"; then
     echo "No log base set, use --log-base <dir> as first arg." >&2
     false
 fi
+
+function test_subdir_unique_target {
+    local subdir="$1"; shift
+    local target="$1"; shift
+    local log_dir="$log_base/$subdir"
+
+    mkdir -p "$log_dir"
+
+    (
+        cd "$subdir" &&
+        make "$target"
+    ) 2>&1 | tee "$log_dir/$HOSTNAME.log"
+
+    status=${PIPESTATUS[0]}
+    if test $status -ne 0; then
+        return $status
+    fi
+}
 
 function test_mcs_class_lib {
     local lib="$1"; shift
@@ -65,12 +86,27 @@ function test_mcs_class_lib {
         cd "mcs/class/$lib" &&
         make run-test $make_args
     ) 2>&1 | tee "$log_base/mcs/class/$lib/$HOSTNAME.log"
-    status=${PIPESTATUS[0]}
 
+    status=${PIPESTATUS[0]}
     if test $status -ne 0; then
         return $status
     fi
 }
+
+if test "$1" = '--mono-mini'; then
+    test_subdir_unique_target 'mono/mini' 'rcheck'
+    shift
+fi
+
+if test "$1" = '--mono-tests'; then
+    test_subdir_unique_target 'mono/tests' 'check-local'
+    shift
+fi
+
+if test "$1" = '--mono-tests-gc-descriptors'; then
+    test_subdir_unique_target 'mono/tests/gc-descriptors' 'check-local'
+    shift
+fi
 
 if test "$1" = '--mcs-class-lib' -a -n "$2"; then
     test_mcs_class_lib "$2"
