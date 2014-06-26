@@ -23,6 +23,8 @@ MONO_TIZEN_HOME="$HOME/mono-tizen"
 
 log_base=
 mono_sources="$MONO_TIZEN_HOME/mono-sources"
+profile_arg=
+profile_log_subdir=
 
 export LANG=C
 
@@ -63,19 +65,21 @@ function test_subdir_unique_target {
 
 function test_mcs_class_lib {
     local lib="$1"; shift
-    local fixture make_args status
+    local make_args="$profile_arg"
+    local log_dir="$log_base/mcs/class/$profile_log_subdir$lib"
+    local fixture status
 
     if test -n "$1"; then
         fixture="$1"; shift
-        make_args="TEST_HARNESS_FLAGS=-fixture=$fixture"
+        make_args="$make_args TEST_HARNESS_FLAGS=-fixture=$fixture"
     fi
 
-    mkdir -p "$log_base/mcs/class/$lib"
+    mkdir -p "$log_dir"
 
     (
         cd "mcs/class/$lib" &&
         make run-test $make_args
-    ) 2>&1 | tee "$log_base/mcs/class/$lib/$HOSTNAME.log"
+    ) 2>&1 | tee "$log_dir/$HOSTNAME.log"
 
     status=${PIPESTATUS[0]}
     if test $status -ne 0; then
@@ -107,6 +111,12 @@ while test -n "$*"; do
             ensure_ready
             test_subdir_unique_target 'mono/tests/gc-descriptors' 'check-local'
             shift
+            ;;
+        --profile)
+            test -n "$2"
+            profile_arg="PROFILE=$2"
+            profile_log_subdir="$2/"
+            shift 2
             ;;
         --mcs-class-lib)
             test -n "$2"
