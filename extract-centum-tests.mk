@@ -17,13 +17,17 @@
 
 include Makefile
 
-# System.{Design,Drawing} fail because we are missing libgdiplus.
-# System.Web*: TODO: Investigate.
+# System.{Design,Drawing} fail to initialize because we are missing
+# libgdiplus.  As does System.Web:
+#
+#    228) MonoTests.System.Web.UI.WebControls.WizardTest.Wizard_ViewState : System.TypeInitializationException : An exception was thrown by the type initializer for System.Drawing.KnownColors
+#      ----> System.TypeInitializationException : An exception was thrown by the type initializer for System.Drawing.GDIPlus
+#      ----> System.DllNotFoundException : /usr/lib/libgdiplus.so
+
 MONO_TIZEN_CENTUM_IGNORE =			\
 	class/System.Design			\
 	class/System.Drawing			\
-	class/System.Web			\
-	class/System.Web.Services
+	class/System.Web
 
 MONO_TIZEN_CENTUM_TESTS =			\
 	$(if $($(PROFILE)_centum_tests),	\
