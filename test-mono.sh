@@ -102,14 +102,15 @@ function test_mcs_run_tests {
 
 function test_mcs_centum_tests {
     local abs_base="$(cd "$BASE" && pwd)"
-    local ct_list="$(echo "${TMPDIR:-/tmp}/$UID-$$-centum-tests.list")"
-    local make_args
+    local ct_list="$log_base/$HOSTNAME-"
+    local make_args profile
 
     if test -n "$net_profile"; then
+        ct_list="$ct_list$net_profile-"
         make_args="PROFILE=$net_profile"
     fi
+    ct_list="${ct_list}centum-tests.list"
 
-    ensure_ready
     rm -f "$ct_list"
     make -C 'mcs' -f "$abs_base/extract-centum-tests.mk"        \
         $make_args "$ct_list"
@@ -161,6 +162,7 @@ while test -n "$*"; do
             shift 2
             ;;
         --mcs-all-centum)
+            ensure_ready
             test_mcs_centum_tests
             shift 1
             ;;
