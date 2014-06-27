@@ -111,9 +111,10 @@ function test_mcs_centum_tests {
     fi
     ct_list="${ct_list}centum-tests.list"
 
-    rm -f "$ct_list"
-    make -C 'mcs' -f "$abs_base/extract-centum-tests.mk"        \
-        $make_args "$ct_list"
+    if ! test -r "$ct_list"; then
+        make -C 'mcs' -f "$abs_base/extract-centum-tests.mk"        \
+            $make_args "$ct_list"
+    fi
 
     for ct in $(cat $ct_list); do
         case "$ct" in
