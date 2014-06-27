@@ -20,11 +20,11 @@
 set -e
 
 MONO_TIZEN_HOME="$HOME/mono-tizen"
+BASE="$(dirname "$0")"
 
 log_base=
 mono_sources="$MONO_TIZEN_HOME/mono-sources"
-profile_arg=
-profile_log_subdir=
+net_profile=
 
 export LANG=C
 
@@ -66,9 +66,15 @@ function test_subdir_unique_target {
 function test_mcs_run_tests {
     local mcs_subdir="$1"; shift
     local dir="$1"; shift
-    local make_args="$profile_arg"
-    local log_dir="$log_base/mcs/$mcs_subdir$profile_log_subdir$dir"
-    local fixture status
+    local log_dir="$log_base/mcs/$mcs_subdir"
+    local make_args fixture status
+
+    if test -n "$net_profile"; then
+        make_args="PROFILE=$net_profile"
+        log_dir="$log_dir$net_profile/"
+    fi
+
+    log_dir="$log_dir$dir"
 
     if test -n "$1"; then
         fixture="$1"; shift
@@ -86,6 +92,36 @@ function test_mcs_run_tests {
     if test $status -ne 0; then
         return $status
     fi
+}
+
+function test_mcs_centum_tests {
+    local abs_base="$(cd "$BASE" && pwd)"
+    local ct_list="$(echo "${TMPDIR:-/tmp}/$UID-$$-centum-tests.list")"
+    local make_args
+
+    if test -n "$net_profile"; then
+        make_args="PROFILE=$net_profile"
+    fi
+
+    ensure_ready
+    rm -f "$ct_list"
+    make -C 'mcs' -f "$abs_base/extract-centum-tests.mk"        \
+        $make_args "$ct_list"
+
+    for ct in $(cat $ct_list); do
+        case "$ct" in
+            class/*)
+                test_mcs_run_tests 'class/' "${ct#class/}"
+                ;;
+            tests|errors)
+                test_mcs_run_tests '' "$ct"
+                ;;
+            *)
+                echo "Unexpected centum test name $ct." >&2
+                exit 1
+                ;;
+        esac
+    done
 }
 
 while test -n "$*"; do
@@ -115,9 +151,12 @@ while test -n "$*"; do
             ;;
         --profile)
             test -n "$2"
-            profile_arg="PROFILE=$2"
-            profile_log_subdir="$2/"
+            net_profile="$2"
             shift 2
+            ;;
+        --mcs-all-centum)
+            test_mcs_centum_tests
+            shift 1
             ;;
         --mcs-tests)
             ensure_ready
