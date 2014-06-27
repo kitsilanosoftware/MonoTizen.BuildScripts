@@ -17,11 +17,20 @@
 
 include Makefile
 
+# System.{Design,Drawing} fail because we are missing libgdiplus.
+# System.Web*: TODO: Investigate.
+MONO_TIZEN_CENTUM_IGNORE =			\
+	class/System.Design			\
+	class/System.Drawing			\
+	class/System.Web			\
+	class/System.Web.Services
+
 MONO_TIZEN_CENTUM_TESTS =			\
 	$(if $($(PROFILE)_centum_tests),	\
 		$($(PROFILE)_centum_tests),	\
 		$(default_centum_tests))
 
 %centum-tests.list:
-	echo $(MONO_TIZEN_CENTUM_TESTS) > $@.tmp
+	echo $(filter-out $(MONO_TIZEN_CENTUM_IGNORE),	\
+		$(MONO_TIZEN_CENTUM_TESTS)) > $@.tmp
 	@mv $@.tmp $@
