@@ -156,6 +156,13 @@ while test -n "$*"; do
             test_subdir_unique_target 'mono/tests/gc-descriptors' 'check-local'
             shift
             ;;
+        --mono-all)
+            ensure_ready
+            test_subdir_unique_target 'mono/mini' 'rcheck'
+            test_subdir_unique_target 'mono/tests' 'check-local'
+            test_subdir_unique_target 'mono/tests/gc-descriptors' 'check-local'
+            shift
+            ;;
         --profile)
             test -n "$2"
             net_profile="$2"
