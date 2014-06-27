@@ -45,6 +45,19 @@ function ensure_ready {
     mono_sources='.'
 }
 
+function identify {
+    local file='/etc/os-release'
+
+    uname -a
+
+    if test -r "$file"; then
+        echo "--- $file"
+        cat "$file"
+    fi
+
+    echo '---'
+}
+
 function test_subdir_unique_target {
     local subdir="$1"; shift
     local target="$1"; shift
@@ -53,7 +66,8 @@ function test_subdir_unique_target {
     mkdir -p "$log_dir"
 
     (
-        cd "$subdir" &&
+        identify
+        cd "$subdir"
         make "$target"
     ) 2>&1 | tee "$log_dir/$HOSTNAME.log.wip"
 
@@ -87,7 +101,8 @@ function test_mcs_run_tests {
     mkdir -p "$log_dir"
 
     (
-        cd "mcs/$mcs_subdir$dir" &&
+        identify
+        cd "mcs/$mcs_subdir$dir"
         make run-test $make_args
     ) 2>&1 | tee "$log_dir/$HOSTNAME.log.wip"
 
