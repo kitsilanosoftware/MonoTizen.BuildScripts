@@ -55,12 +55,15 @@ function test_subdir_unique_target {
     (
         cd "$subdir" &&
         make "$target"
-    ) 2>&1 | tee "$log_dir/$HOSTNAME.log"
+    ) 2>&1 | tee "$log_dir/$HOSTNAME.log.wip"
 
     status=${PIPESTATUS[0]}
     if test $status -ne 0; then
         return $status
     fi
+
+    rm -f "$log_dir/$HOSTNAME.log"
+    mv "$log_dir/$HOSTNAME.log.wip" "$log_dir/$HOSTNAME.log"
 }
 
 function test_mcs_run_tests {
@@ -86,12 +89,15 @@ function test_mcs_run_tests {
     (
         cd "mcs/$mcs_subdir$dir" &&
         make run-test $make_args
-    ) 2>&1 | tee "$log_dir/$HOSTNAME.log"
+    ) 2>&1 | tee "$log_dir/$HOSTNAME.log.wip"
 
     status=${PIPESTATUS[0]}
     if test $status -ne 0; then
         return $status
     fi
+
+    rm -f "$log_dir/$HOSTNAME.log"
+    mv "$log_dir/$HOSTNAME.log.wip" "$log_dir/$HOSTNAME.log"
 }
 
 function test_mcs_centum_tests {
