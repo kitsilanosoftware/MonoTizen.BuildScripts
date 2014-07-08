@@ -48,7 +48,7 @@ build/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%.zip:			\
 tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/zip.stamp:			\
 		tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/unpack.stamp
 	rm -rf $(dir $@)zip
-	mkdir -p $(dir $@)zip/lib/mono/2.0
+	mkdir -p $(dir $@)zip/lib/mono
 	cp $(dir $@)unpack/usr/lib/libmonoboehm-2.0.so.1.0.0	\
 		$(dir $@)zip/lib/libmonoboehm-2.0.so.1
 	rsync -a $(dir $@)unpack/usr/include/mono-2.0/ $(dir $@)zip/inc/
