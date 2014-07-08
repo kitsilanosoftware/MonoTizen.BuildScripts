@@ -26,6 +26,14 @@ RPM_NAMES =					\
 ZIPS = $(foreach A,$(MONO_TIZEN_ARCHS),					\
 		build/mono-tizen-$(MONO_TIZEN_RPM_VERSION).$(A).zip)
 
+RPM_URL_BASE =								\
+	http://phio.crosstwine.com/kitsilano/mono-tizen/tarballs/rpms
+
+RPM_DIR_BASE =
+
+RPM_STAGE =						\
+	tmp/$(if $(RPM_DIR_BASE),links,downloads)
+
 .PHONY: all
 
 all: $(ZIPS)
@@ -57,9 +65,9 @@ tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/zip.stamp:			\
 		$(dir $@)unpack/usr/lib/mono/4.5/ $(dir $@)zip/lib/mono/
 	touch $@
 
-tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/unpack.stamp:		\
-		$(foreach N,$(RPM_NAMES),				\
-			tmp/$(N)-$(MONO_TIZEN_RPM_VERSION).%.rpm)
+tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/unpack.stamp:		   \
+		$(foreach N,$(RPM_NAMES),				   \
+			$(RPM_STAGE)/$(N)-$(MONO_TIZEN_RPM_VERSION).%.rpm)
 	rm -rf $(dir $@)unpack
 	mkdir -p $(dir $@)unpack
 	cd $(dir $@)unpack &&				\
@@ -68,15 +76,23 @@ tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/unpack.stamp:		\
 		done
 	touch $@
 
-tmp/%.armv7l.rpm:
+tmp/downloads/%.armv7l.rpm:
 	@mkdir -p $(dir $@)
-	wget -O $@.tmp http://phio.crosstwine.com/kitsilano/mono-tizen/tarballs/rpms/2.2-armv7l/$(notdir $@)
+	wget -O $@.tmp $(RPM_URL_BASE)/2.2-armv7l/$(notdir $@)
 	@mv $@.tmp $@
 
-tmp/%.i586.rpm:
+tmp/downloads/%.i586.rpm:
 	@mkdir -p $(dir $@)
-	wget -O $@.tmp http://phio.crosstwine.com/kitsilano/mono-tizen/tarballs/rpms/2.2-i686/$(notdir $@)
+	wget -O $@.tmp $(RPM_URL_BASE)/2.2-i686/$(notdir $@)
 	@mv $@.tmp $@
+
+tmp/links/%.armv7l.rpm:
+	@mkdir -p $(dir $@)
+	cd $(dir $@) && ln -s $(abspath $(RPM_DIR_BASE)/2.2-armv7l/$(notdir $@))
+
+tmp/links/%.i586.rpm:
+	@mkdir -p $(dir $@)
+	cd $(dir $@) && ln -s $(abspath $(RPM_DIR_BASE)/2.2-i686/$(notdir $@))
 
 .PRECIOUS:							\
 	build/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%.zip	\
