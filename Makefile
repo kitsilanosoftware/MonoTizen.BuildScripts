@@ -18,10 +18,11 @@
 MONO_TIZEN_RPM_VERSION = 3.6.0-0
 MONO_TIZEN_ARCHS = armv7l i586
 MONO_TIZEN_OS_RELEASE = 2.2.1
+MONO_TIZEN_GC = sgen
 
 RPM_NAMES =					\
 	libmono-2_0-devel			\
-	libmonoboehm-2_0-1			\
+	libmono$(MONO_TIZEN_GC)-2_0-1		\
 	mono-core
 
 ZIPS = $(foreach A,$(MONO_TIZEN_ARCHS),					\
@@ -50,8 +51,8 @@ tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/zip.stamp:			\
 		tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/unpack.stamp
 	rm -rf $(dir $@)zip
 	mkdir -p $(dir $@)zip/lib/mono
-	cp $(dir $@)unpack/usr/lib/libmonoboehm-2.0.so.1.0.0	\
-		$(dir $@)zip/lib/libmonoboehm-2.0.so.1
+	cp $(dir $@)unpack/usr/lib/libmono$(MONO_TIZEN_GC)-2.0.so.1.0.0	\
+		$(dir $@)zip/lib/libmono$(MONO_TIZEN_GC)-2.0.so.1
 	rsync -a $(dir $@)unpack/usr/include/mono-2.0/ $(dir $@)zip/inc/
 	# Note: We copy links, and ignore some assemblies that are
 	# missing from the .NET 4.5 profile (?)
