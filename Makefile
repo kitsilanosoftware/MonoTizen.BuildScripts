@@ -17,6 +17,7 @@
 
 MONO_TIZEN_RPM_VERSION = 3.6.0-0
 MONO_TIZEN_ARCHS = armv7l i586
+MONO_TIZEN_OS_RELEASE = 2.2.1
 
 RPM_NAMES =					\
 	libmono-2_0-devel			\
@@ -34,7 +35,7 @@ RPM_DIR_BASE =
 RPM_STAGE =						\
 	tmp/$(if $(RPM_DIR_BASE),links,downloads)
 
-.PHONY: all
+.PHONY: all clean
 
 all: $(ZIPS)
 
@@ -78,25 +79,34 @@ tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/unpack.stamp:		   \
 
 tmp/downloads/%.armv7l.rpm:
 	@mkdir -p $(dir $@)
-	wget -O $@.tmp $(RPM_URL_BASE)/2.2-armv7l/$(notdir $@)
+	wget -O $@.tmp \
+		$(RPM_URL_BASE)/$(MONO_TIZEN_OS_RELEASE)-armv7l/$(notdir $@)
 	@mv $@.tmp $@
 
 tmp/downloads/%.i586.rpm:
 	@mkdir -p $(dir $@)
-	wget -O $@.tmp $(RPM_URL_BASE)/2.2-i686/$(notdir $@)
+	wget -O $@.tmp \
+		$(RPM_URL_BASE)/$(MONO_TIZEN_OS_RELEASE)-i686/$(notdir $@)
 	@mv $@.tmp $@
 
 tmp/links/%.armv7l.rpm:
 	@mkdir -p $(dir $@)
-	cd $(dir $@) && ln -s $(abspath $(RPM_DIR_BASE)/2.2-armv7l/$(notdir $@))
+	cd $(dir $@) && \
+		ln -s $(abspath $(RPM_DIR_BASE)/$(MONO_TIZEN_OS_RELEASE)-armv7l/$(notdir $@))
 
 tmp/links/%.i586.rpm:
 	@mkdir -p $(dir $@)
-	cd $(dir $@) && ln -s $(abspath $(RPM_DIR_BASE)/2.2-i686/$(notdir $@))
+	cd $(dir $@) && \
+		ln -s $(abspath $(RPM_DIR_BASE)/$(MONO_TIZEN_OS_RELEASE)-i686/$(notdir $@))
+
+clean:
+	rm -rf build/
 
 .PRECIOUS:							\
 	build/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%.zip	\
-	tmp/%.armv7l.rpm					\
-	tmp/%.i586.rpm						\
+	tmp/downloads/%.armv7l.rpm				\
+	tmp/downloads/%.i586.rpm				\
+	tmp/links/%.armv7l.rpm					\
+	tmp/links/%.i586.rpm					\
 	tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/unpack.stamp	\
 	tmp/mono-tizen-$(MONO_TIZEN_RPM_VERSION).%/zip.stamp
